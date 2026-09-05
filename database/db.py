@@ -21,7 +21,7 @@ class Database:
                     tmdb_id INTEGER UNIQUE,
                     title TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                ) 
             """)
       conn.commit()
 
