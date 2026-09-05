@@ -20,6 +20,16 @@ class TMDBClient:
     except Exception:
       return {}
 
+  def _get_english_overview(self, movie_id: int) -> str:
+    """Делает фоллбэк-запрос для получения описания на английском языке."""
+    url = f'{self.BASE_URL}/movie/{movie_id}'
+    params = {'api_key': self.api_key, 'language': 'en-US'}
+    try:
+      res = requests.get(url, params=params, timeout=5).json()
+      return res.get('overview', '')
+    except Exception:
+      return ''
+
   def get_digital_releases_last_7_days(self) -> list[Movie]:
     """Фильтрует фильмы: цифровой релиз за последние 7 дней, оценка >= 5.0."""
     now = datetime.now()
@@ -46,6 +56,7 @@ class TMDBClient:
 
     movies = []
     for item in data.get('results', []):
+      movie_id = item.get('id')
       release_date = item.get('release_date', '')
       year = release_date.split('-')[0] if release_date else ''
 
@@ -55,6 +66,11 @@ class TMDBClient:
           for gid in genre_ids
           if gid in self.genres_map
       ]
+
+      # Логика подтягивания английского описания, если русское отсутствует
+      overview = item.get('overview', '').strip()
+      if not overview and movie_id:
+        overview = self._get_english_overview(movie_id)
 
       movies.append(
           Movie(
@@ -70,7 +86,7 @@ class TMDBClient:
                   if item.get('poster_path')
                   else ""
               ),
-              overview=item.get('overview', 'Описание отсутствует.'),
+              overview=overview or 'Описание отсутствует.',
           )
       )
 
