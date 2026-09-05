@@ -35,7 +35,7 @@ def run_pipeline():
       success = telegram_sender.send_movie_notification(movie)
       if success:
         db.add_movie(movie.tmdb_id, movie.title)
-        logging.info(f'[DB] Фильм {movie.title} сохранен в БД.')
+        logging.info(f'[DB] Фильм {movie.title} сохранён в БД.')
 
   except Exception:
     logging.exception('[Pipeline] Критическая ошибка')
