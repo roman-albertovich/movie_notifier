@@ -25,6 +25,8 @@ class TMDBClient:
     now = datetime.now()
     start_date = (now - timedelta(days=7)).strftime('%Y-%m-%d')
     end_date = now.strftime('%Y-%m-%d')
+    # Дата 360 дней назад для фильтрации года/мировой премьеры фильма
+    min_movie_age_date = (now - timedelta(days=360)).strftime('%Y-%m-%d')
 
     url = f'{self.BASE_URL}/discover/movie'
     params = {
@@ -34,6 +36,7 @@ class TMDBClient:
         'with_release_type': '4|5',  # Цифровые и физические релизы
         'release_date.gte': start_date,
         'release_date.lte': end_date,
+        'primary_release_date.gte': min_movie_age_date,
         'vote_average.gte': 5.0,  # Оценка выше 5.0
         'sort_by': 'popularity.desc',
     }
