@@ -62,7 +62,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
             cd /opt/movie_notifier
-            git pull origin main
+            git pull --ff-only origin main
             source .venv/bin/activate
             pip install -r requirements.txt
+            echo "Deployed commit:"
+            git log -1 --oneline
