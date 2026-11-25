@@ -1,7 +1,11 @@
 import logging
 from html import escape
+
 import requests
+
 from tmdb.models import Movie
+
+logger = logging.getLogger(__name__)
 
 
 class TelegramSender:
@@ -64,9 +68,7 @@ class TelegramSender:
         title = escape(str(movie.title or "—"))
         url = escape(str(movie.url or ""), quote=True)
         year = escape(str(movie.year or "—"))
-        original_title = escape(
-            str(movie.original_title or "—")
-        )
+        original_title = escape(str(movie.original_title or "—"))
         rating = escape(str(movie.rating or "—"))
         genre = escape(str(movie.genre or "—"))
 
@@ -88,7 +90,7 @@ class TelegramSender:
         prefix_length = self._telegram_length(prefix)
 
         if prefix_length >= self.MAX_CAPTION_LENGTH:
-            logging.warning(
+            logger.warning(
                 "[Telegram] Фиксированная часть caption превышает лимит 1024 символа."
             )
 
@@ -103,15 +105,10 @@ class TelegramSender:
             if self._telegram_length(fallback) <= self.MAX_CAPTION_LENGTH:
                 return fallback
 
-            return self._truncate_html_safe(
-                fallback,
-                self.MAX_CAPTION_LENGTH
-            )
+            return self._truncate_html_safe(fallback, self.MAX_CAPTION_LENGTH)
 
         # Сколько места осталось под описание.
-        available = (
-            self.MAX_CAPTION_LENGTH - prefix_length
-        )
+        available = self.MAX_CAPTION_LENGTH - prefix_length
 
         escaped_overview = escape(overview)
 
@@ -127,20 +124,11 @@ class TelegramSender:
         # Если места недостаточно даже для suffix,
         # оставляем максимально возможное количество символов.
         if available <= suffix_length:
-            return (
-                prefix
-                + self._truncate_html_safe(
-                    overview,
-                    available
-                )
-            )
+            return prefix + self._truncate_html_safe(overview, available)
 
         available_for_overview = available - suffix_length
 
-        safe_overview = self._truncate_html_safe(
-            overview,
-            available_for_overview
-        )
+        safe_overview = self._truncate_html_safe(overview, available_for_overview)
 
         return prefix + safe_overview + suffix
 
@@ -156,15 +144,11 @@ class TelegramSender:
         """
 
         if not self.token:
-            logging.error(
-                "[Telegram] TELEGRAM_BOT_TOKEN не заполнен."
-            )
+            logger.error("[Telegram] TELEGRAM_BOT_TOKEN не заполнен.")
             return False
 
         if not self.chat_id:
-            logging.error(
-                "[Telegram] TELEGRAM_CHAT_ID не заполнен."
-            )
+            logger.error("[Telegram] TELEGRAM_CHAT_ID не заполнен.")
             return False
 
         caption = self._build_caption(movie)
@@ -174,7 +158,7 @@ class TelegramSender:
         caption_length = self._telegram_length(caption)
 
         if caption_length > self.MAX_CAPTION_LENGTH:
-            logging.error(
+            logger.error(
                 "[Telegram] Caption превышает лимит: "
                 f"{caption_length}/{self.MAX_CAPTION_LENGTH}"
             )
@@ -211,7 +195,7 @@ class TelegramSender:
             try:
                 data = response.json()
             except ValueError:
-                logging.error(
+                logger.error(
                     "[Telegram] Telegram API вернул "
                     f"невалидный JSON. HTTP {response.status_code}: "
                     f"{response.text[:500]}"
@@ -219,13 +203,10 @@ class TelegramSender:
                 return False
 
             if response.status_code == 200 and data.get("ok"):
-                logging.info(
-                    f"[Telegram] Уведомление отправлено: "
-                    f"{movie.title}"
-                )
+                logger.info(f"[Telegram] Уведомление отправлено: {movie.title}")
                 return True
 
-            logging.error(
+            logger.error(
                 "[Telegram] Ошибка отправки: "
                 f"HTTP {response.status_code}; "
                 f"{data.get('description', 'Неизвестная ошибка')}"
@@ -234,14 +215,9 @@ class TelegramSender:
             return False
 
         except requests.RequestException as e:
-            logging.error(
-                f"[Telegram] Ошибка HTTP-запроса: {e}"
-            )
+            logger.error(f"[Telegram] Ошибка HTTP-запроса: {e}")
             return False
 
         except Exception:
-            logging.exception(
-                "[Telegram] Неожиданная ошибка "
-                "при отправке сообщения"
-            )
+            logger.exception("[Telegram] Неожиданная ошибка при отправке сообщения")
             return False

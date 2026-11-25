@@ -1,18 +1,21 @@
-from database.db import Database
 import sqlite3
+
+from database.db import Database
 
 
 def test_database_initialization(tmp_path):
-    db_path = str(tmp_path / "test.db")
+    db_path = tmp_path / "test.db"
 
-    db = Database(db_path)
+    db = Database(str(db_path))
 
-    assert db.db_path == db_path
+    assert db.db_path == str(db_path)
     assert db_path.exists()
 
     with sqlite3.connect(db.db_path) as conn:
-        tables = {r[0] for r in conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'")}
+        tables = {
+            r[0]
+            for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
 
     assert "processed_movies" in tables
 
@@ -51,6 +54,7 @@ def test_duplicate_movie_is_not_added(tmp_path):
 
     assert count == 1
     assert title == "Interstellar"
+
 
 def test_movie_title_is_stripped(tmp_path):
     db = Database(str(tmp_path / "test.db"))
