@@ -63,9 +63,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            cd /opt/movie_notifier
-            git pull --ff-only origin main
-            source .venv/bin/activate
-            pip install -r requirements.txt
-            echo "Deployed commit:"
-            git log -1 --oneline
+            /usr/local/sbin/movie-notifier-deploy
